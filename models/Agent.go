@@ -58,7 +58,7 @@ func NewAgent(id int64) Agent {
 		id:          id,
 		Neighbors:   []Agent{},
 		HP:          rand.Int63n(config.MaxHP),
-		Ideology:    rand.Int63n(config.MaxIdeorogy),
+		Ideology:    rand.Int63n(config.MaxIdeology),
 		Receptivity: rand.NormFloat64(),
 		Recovery:    rand.Int63n(config.MaxRecovery),
 	}
