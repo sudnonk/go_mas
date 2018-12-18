@@ -25,7 +25,7 @@ type Agent struct {
 //二つのエージェントのイデオロギーの交流
 func (a *Agent) Mix(a2 Agent) {
 	if a.HP <= 0 {
-
+		//todo: その人とのネットワークを切る処理
 	}
 
 	diff := math.Abs(float64(a.Ideology) - float64(a2.Ideology))
@@ -49,7 +49,7 @@ func (a *Agent) Recover() {
 }
 
 //隣人を追加
-func (a *Agent) AddNeighbor(as []Agent) {
+func (a *Agent) addNeighbor(as []Agent) {
 	a.Neighbors = append(a.Neighbors, as...)
 }
 
