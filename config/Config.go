@@ -6,4 +6,7 @@ const (
 	MaxHP       = 1000
 	MaxIdeology = 10000
 	MaxRecovery = 100
+
+	NearCriteria = 0.2
+	FarCriteria  = 0.8
 )
