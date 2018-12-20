@@ -26,8 +26,8 @@ func (u *Universe) makeNetwork() {
 
 func (u *Universe) step() {
 	for _, a := range u.Agents {
-		for _, a2 := range u.Agents {
-
+		for _, a2 := range a.Following {
+			a.Step(a2)
 		}
 	}
 }
