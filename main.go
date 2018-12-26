@@ -4,17 +4,23 @@ import (
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/models"
 	"log"
+	"sync"
 )
 
 func main() {
-	cs := make(chan struct{})
+	wg := sync.WaitGroup{}
+
 	for i := 0; i < config.MaxUniverse; i++ {
-		go world(cs)
+		go func() {
+			wg.Add(1)
+			world()
+			wg.Done()
+		}()
 	}
-	<-cs
+	wg.Wait()
 }
 
-func world(c chan struct{}) {
+func world() {
 	log.Println("called")
 	var u models.Universe
 	u.Init()
@@ -24,5 +30,4 @@ func world(c chan struct{}) {
 	}
 	u.End()
 	log.Println("end")
-	c <- struct{}{}
 }
