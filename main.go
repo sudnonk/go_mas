@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/models"
-	"log"
 	"sync"
 )
 
@@ -21,13 +20,10 @@ func main() {
 }
 
 func world() {
-	log.Println("called")
 	var u models.Universe
 	u.Init()
 	for i := 0; i < config.MaxSteps; i++ {
-		log.Println("step" + string(i))
 		u.Step()
 	}
 	u.End()
-	log.Println("end")
 }
