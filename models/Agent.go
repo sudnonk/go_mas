@@ -142,9 +142,20 @@ func (a *Agent) followDifferentIdeology(as map[int64]Agent) {
 	//todo: フォローすべき相手が見つからなかった場合
 }
 
-//フォロワーの多い人をフォローする
+//フォローしてる人が多い人をフォローする
 func (a *Agent) followInfluencer(as map[int64]Agent) {
-	//todo:implement
+	maxA := a.id
+	maxL := 0
+
+	for _, aID := range a.Following {
+		a2 := as[aID]
+		if l := len(a2.Following); l > maxL {
+			maxA = a2.id
+			maxL = l
+		}
+	}
+
+	a.Following = append(a.Following, maxA)
 }
 
 func NewAgent(id int64) Agent {
