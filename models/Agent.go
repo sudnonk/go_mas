@@ -10,8 +10,8 @@ import (
 type Agent struct {
 	//一意に特定するもの
 	id int64
-	//このエージェントがフォローしてるエージェントのリスト
-	Following []Agent
+	//このエージェントがフォローしてるエージェントIDのリスト
+	Following []int64
 	//体力
 	HP int64
 	//思想
@@ -22,8 +22,9 @@ type Agent struct {
 	Recovery int64
 }
 
-func (a *Agent) Step(as []Agent) {
-	for _, a2 := range a.Following {
+func (a *Agent) Step(as map[int64]Agent) {
+	for _, aID := range a.Following {
+		a2 := as[aID]
 		diff := math.Abs(float64(a.Ideology) - float64(a2.Ideology))
 		a.damage(diff)  //HPを消費して
 		a.mix(a2, diff) //思想が混ざる
@@ -31,9 +32,10 @@ func (a *Agent) Step(as []Agent) {
 
 	//体力がなくなると違うイデオロギーのフォローを外す
 	if a.HP <= 0 {
-		a.unfollowDifferentIdeology()
+		a.unfollowDifferentIdeology(as)
 	}
 
+	//受容性が高い人ほど高い値が出る
 	followCriteria := a.Receptivity * utils.RandNormDecimal()
 
 	if followCriteria > 0.7 {
@@ -52,7 +54,6 @@ func (a *Agent) mix(a2 Agent, diff float64) {
 	//混ざり具合
 	mixture := utils.RandDecimal()
 
-	//todo: ここ冗長？
 	if diff > 0 {
 		//a:100,0.7 a2:0 -> a:30
 		a.Ideology = a.Ideology - utils.Round(diff*(1-a.Receptivity)*mixture)
@@ -73,15 +74,30 @@ func (a *Agent) recover() {
 	a.HP += a.Recovery
 }
 
-func (a *Agent) unfollowDifferentIdeology() {
-	//todo: implement
-	for _, a2 := range a.Following {
+func (a *Agent) unfollowDifferentIdeology(as map[int64]Agent) {
+	maxA := a.id
+	maxD := int64(0)
 
+	for _, aID := range a.Following {
+		a2 := as[aID]
+		if diff := utils.Abs(a2.Ideology - a.Ideology); diff > maxD {
+			maxA = a2.id
+			maxD = diff
+		}
 	}
+
+	var f []int64
+	for _, aID := range a.Following {
+		if aID != maxA {
+			f = append(f, aID)
+		}
+	}
+
+	a.Following = f
 }
 
 //近い意見の人をフォローする
-func (a *Agent) followNearIdeology(as []Agent) {
+func (a *Agent) followNearIdeology(as map[int64]Agent) {
 	maxI := int64(float64(a.Ideology) * (1.0 + config.NearCriteria))
 	minI := int64(float64(a.Ideology) * (1.0 - config.NearCriteria))
 
@@ -93,7 +109,7 @@ func (a *Agent) followNearIdeology(as []Agent) {
 		}
 
 		if as[r].Ideology < maxI || as[r].Ideology > minI {
-			a.Following = append(a.Following, as[r])
+			a.Following = append(a.Following, r)
 			return
 		}
 
@@ -104,7 +120,7 @@ func (a *Agent) followNearIdeology(as []Agent) {
 }
 
 //違う意見の人をフォローする
-func (a *Agent) followDifferentIdeology(as []Agent) {
+func (a *Agent) followDifferentIdeology(as map[int64]Agent) {
 	maxI := int64(float64(a.Ideology) * (1.0 + config.FarCriteria))
 	minI := int64(float64(a.Ideology) * (1.0 - config.FarCriteria))
 
@@ -116,7 +132,7 @@ func (a *Agent) followDifferentIdeology(as []Agent) {
 		}
 
 		if as[r].Ideology > maxI || as[r].Ideology < minI {
-			a.Following = append(a.Following, as[r])
+			a.Following = append(a.Following, r)
 			return
 		}
 
@@ -127,14 +143,14 @@ func (a *Agent) followDifferentIdeology(as []Agent) {
 }
 
 //フォロワーの多い人をフォローする
-func (a *Agent) followInfluencer(as []Agent) {
+func (a *Agent) followInfluencer(as map[int64]Agent) {
 	//todo:implement
 }
 
 func NewAgent(id int64) Agent {
 	return Agent{
 		id:          id,
-		Following:   []Agent{},
+		Following:   []int64{},
 		HP:          rand.Int63n(config.MaxHP),
 		Ideology:    rand.Int63n(config.MaxIdeology),
 		Receptivity: utils.RandNormDecimal(),
