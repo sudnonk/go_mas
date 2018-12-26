@@ -9,11 +9,9 @@ type Universe struct {
 }
 
 func (u *Universe) Init() {
-	var i int64
-
 	u.Agents = map[int64]Agent{}
 
-	for i = 0; i < config.MaxAgents; i++ {
+	for i := int64(0); i < config.MaxAgents; i++ {
 		u.Agents[i] = NewAgent(i)
 	}
 
@@ -26,8 +24,6 @@ func (u *Universe) makeNetwork() {
 
 func (u *Universe) step() {
 	for _, a := range u.Agents {
-		for _, a2 := range a.Following {
-			a.Step(a2)
-		}
+		a.Step(u.Agents)
 	}
 }
