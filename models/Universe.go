@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/sudnonk/go_mas/config"
+	"math/rand"
 )
 
 type Universe struct {
@@ -19,11 +20,27 @@ func (u *Universe) Init() {
 }
 
 func (u *Universe) makeNetwork() {
-	//todo: 実装
+	//todo: より良いネットワーク
+	for _, a := range u.Agents {
+		b := map[int64]bool{a.id: true}
+		for i := int64(0); i < rand.Int63n(config.MaxAgents); i++ {
+			id := rand.Int63n(config.MaxAgents)
+			if _, ok := b[id]; ok {
+				continue
+			}
+			b[id] = true
+
+			a.Following = append(a.Following, id)
+		}
+	}
 }
 
-func (u *Universe) step() {
+func (u *Universe) Step() {
 	for _, a := range u.Agents {
 		a.Step(u.Agents)
 	}
+}
+
+func (u *Universe) End() {
+
 }
