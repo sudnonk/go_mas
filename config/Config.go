@@ -1,7 +1,7 @@
 package config
 
 const (
-	MaxUniverse = 450
+	MaxUniverse = 400
 	MaxAgents   = 1000000
 	MaxHP       = 1000
 	MaxIdeology = 10000
