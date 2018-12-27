@@ -6,11 +6,15 @@ import (
 )
 
 type Universe struct {
-	Agents map[int64]Agent
+	Id      int64
+	Agents  map[int64]Agent
+	StepNum int64
 }
 
-func (u *Universe) Init() {
+func (u *Universe) Init(id int64) {
+	u.Id = id
 	u.Agents = map[int64]Agent{}
+	u.StepNum = 0
 
 	for i := int64(0); i < config.MaxAgents; i++ {
 		u.Agents[i] = NewAgent(i)
@@ -36,6 +40,8 @@ func (u *Universe) makeNetwork() {
 }
 
 func (u *Universe) Step() {
+	u.StepNum++
+
 	for _, a := range u.Agents {
 		a.Step(u.Agents)
 	}
