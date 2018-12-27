@@ -158,8 +158,8 @@ func (a *Agent) followInfluencer(as map[int64]Agent) {
 	a.Following = append(a.Following, maxA)
 }
 
-func NewAgent(id int64) Agent {
-	return Agent{
+func NewAgent(id int64, c chan Agent) {
+	c <- Agent{
 		Id:          id,
 		Following:   []int64{},
 		HP:          rand.Int63n(config.MaxHP),
