@@ -9,17 +9,17 @@ import (
 
 type Agent struct {
 	//一意に特定するもの
-	id int64
+	Id int64 `json:"id"`
 	//このエージェントがフォローしてるエージェントIDのリスト
-	Following []int64
+	Following []int64 `json:"f"`
 	//体力
-	HP int64
+	HP int64 `json:"h"`
 	//思想
-	Ideology int64
+	Ideology int64 `json:"i"`
 	//受容しやすさ
-	Receptivity float64
+	Receptivity float64 `json:"rcp"`
 	//回復量
-	Recovery int64
+	Recovery int64 `json:"rcv"`
 }
 
 func (a *Agent) Step(as map[int64]Agent) {
@@ -75,13 +75,13 @@ func (a *Agent) recover() {
 }
 
 func (a *Agent) unfollowDifferentIdeology(as map[int64]Agent) {
-	maxA := a.id
+	maxA := a.Id
 	maxD := int64(0)
 
 	for _, aID := range a.Following {
 		a2 := as[aID]
 		if diff := utils.Abs(a2.Ideology - a.Ideology); diff > maxD {
-			maxA = a2.id
+			maxA = a2.Id
 			maxD = diff
 		}
 	}
@@ -101,7 +101,7 @@ func (a *Agent) followNearIdeology(as map[int64]Agent) {
 	maxI := int64(float64(a.Ideology) * (1.0 + config.NearCriteria))
 	minI := int64(float64(a.Ideology) * (1.0 - config.NearCriteria))
 
-	checked := map[int64]bool{a.id: true}
+	checked := map[int64]bool{a.Id: true}
 	for true {
 		r := rand.Int63n(config.MaxAgents)
 		if _, ok := checked[r]; ok {
@@ -124,7 +124,7 @@ func (a *Agent) followDifferentIdeology(as map[int64]Agent) {
 	maxI := int64(float64(a.Ideology) * (1.0 + config.FarCriteria))
 	minI := int64(float64(a.Ideology) * (1.0 - config.FarCriteria))
 
-	checked := map[int64]bool{a.id: true}
+	checked := map[int64]bool{a.Id: true}
 	for true {
 		r := rand.Int63n(config.MaxAgents)
 		if _, ok := checked[r]; ok {
@@ -144,13 +144,13 @@ func (a *Agent) followDifferentIdeology(as map[int64]Agent) {
 
 //フォローしてる人が多い人をフォローする
 func (a *Agent) followInfluencer(as map[int64]Agent) {
-	maxA := a.id
+	maxA := a.Id
 	maxL := 0
 
 	for _, aID := range a.Following {
 		a2 := as[aID]
 		if l := len(a2.Following); l > maxL {
-			maxA = a2.id
+			maxA = a2.Id
 			maxL = l
 		}
 	}
@@ -160,7 +160,7 @@ func (a *Agent) followInfluencer(as map[int64]Agent) {
 
 func NewAgent(id int64) Agent {
 	return Agent{
-		id:          id,
+		Id:          id,
 		Following:   []int64{},
 		HP:          rand.Int63n(config.MaxHP),
 		Ideology:    rand.Int63n(config.MaxIdeology),

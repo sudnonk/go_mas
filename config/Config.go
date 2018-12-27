@@ -11,4 +11,6 @@ const (
 
 	NearCriteria = 0.2
 	FarCriteria  = 0.8
+
+	LogPath = "C:\\go_mas\\"
 )

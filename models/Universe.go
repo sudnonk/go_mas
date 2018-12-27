@@ -26,7 +26,7 @@ func (u *Universe) Init(id int64) {
 func (u *Universe) makeNetwork() {
 	//todo: より良いネットワーク
 	for _, a := range u.Agents {
-		b := map[int64]bool{a.id: true}
+		b := map[int64]bool{a.Id: true}
 		for i := int64(0); i < rand.Int63n(config.MaxAgents); i++ {
 			id := rand.Int63n(config.MaxAgents)
 			if _, ok := b[id]; ok {
