@@ -27,6 +27,7 @@ func world(i int64) {
 	u.Init(i)
 
 	file, err := os.Open(config.LogPath + strconv.FormatInt(i, 10) + ".csv")
+	log.Println(config.LogPath + strconv.FormatInt(i, 10) + ".csv")
 	if err != nil {
 		log.Fatal(err)
 	}
