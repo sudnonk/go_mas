@@ -2,7 +2,9 @@ package models
 
 import (
 	"github.com/sudnonk/go_mas/config"
+	"log"
 	"math/rand"
+	"unsafe"
 )
 
 type Universe struct {
@@ -15,6 +17,8 @@ func (u *Universe) Init(id int64) {
 	u.Id = id
 	u.Agents = map[int64]Agent{}
 	u.StepNum = 0
+
+	log.Println(unsafe.Sizeof(NewAgent(0)))
 
 	for i := int64(0); i < config.MaxAgents; i++ {
 		u.Agents[i] = NewAgent(i)
