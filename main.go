@@ -11,7 +11,7 @@ import (
 
 func main() {
 	wg := sync.WaitGroup{}
-
+	log.Println("start")
 	for i := int64(0); i < config.MaxUniverse; i++ {
 		go func() {
 			wg.Add(1)
@@ -20,6 +20,7 @@ func main() {
 		}()
 	}
 	wg.Wait()
+	log.Println("end")
 }
 
 func world(i int64) {
