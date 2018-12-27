@@ -16,13 +16,14 @@ func (u *Universe) Init(id int64) {
 	u.Agents = map[int64]Agent{}
 	u.StepNum = 0
 
-	c := make(chan Agent)
+	c := make(chan Agent, 10000)
 	for i := int64(0); i < config.MaxAgents; i++ {
-		NewAgent(i, c)
+		go NewAgent(i, c)
 	}
 	for i := int64(0); i < config.MaxAgents; i++ {
 		u.Agents[i] = <-c
 	}
+	close(c)
 
 	u.makeNetwork()
 }
