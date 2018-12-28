@@ -37,21 +37,21 @@ func LogStep(u *Universe, fname string) {
 	}
 	l = append(l, lr...)
 
-	writeLog(&l, fname)
+	writeLog(u.Id, &l, fname)
 }
 
-func writeLog(data *[]byte, fname string) {
+func writeLog(id int64, data *[]byte, fname string) {
 	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Println(err)
+		log.Println(id, err)
 		return
 	}
 
 	if _, err := file.Write(*data); err != nil {
-		log.Println(err)
+		log.Println(id, err)
 	}
 
 	if err := file.Close(); err != nil {
-		log.Println(err)
+		log.Println(id, err)
 	}
 }
