@@ -1,11 +1,13 @@
 package config
 
 const (
-	MaxUniverse = 400
-	MaxAgents   = 1000000
-	MaxHP       = 1000
-	MaxIdeology = 10000
-	MaxRecovery = 100
+	MaxUniverse = 10
+	MaxAgents   = 10000
+	MaxHP       = 10000
+	MaxIdeology = 1000
+	MaxRecovery = 500
+
+	InitMaxFollowing = 500
 
 	MaxSteps = 1000
 

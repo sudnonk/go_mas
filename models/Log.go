@@ -2,32 +2,56 @@ package models
 
 import (
 	"github.com/sakura-internet/go-rison"
+	"log"
 	"os"
-	"strconv"
 )
 
-func LogStep(u Universe, file *os.File) {
-	if u.StepNum%100 != 0 {
-		return
-	}
+func LogStepChan(cu chan *Universe, cf chan *os.File) {
+	for u := range cu {
+		for file := range cf {
+			lr := []byte("\n")
+			q := []byte("=")
+			var l []byte
+			for _, a := range u.Agents {
+				r, _ := rison.Marshal(&a, rison.ORison)
+				l = append(l, r...)
+				l = append(l, q...)
+			}
+			l = append(l, lr...)
 
-	l := []byte(strconv.FormatInt(u.Id, 10) + ",")
+			if _, err := file.Write(l); err != nil {
+
+			}
+		}
+	}
+}
+
+func LogStep(u *Universe, fname string) {
+	lr := []byte("\n")
+	q := []byte("=")
+	var l []byte
 	for _, a := range u.Agents {
 		r, _ := rison.Marshal(&a, rison.ORison)
 		l = append(l, r...)
+		l = append(l, q...)
+	}
+	l = append(l, lr...)
+
+	writeLog(&l, fname)
+}
+
+func writeLog(data *[]byte, fname string) {
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 
-	go func() {
-		if _, err := file.Write(l); err != nil {
+	if _, err := file.Write(*data); err != nil {
+		log.Println(err)
+	}
 
-		}
-	}()
-}
-
-func LogInit(u Universe) {
-
-}
-
-func LogEnd(u Universe) {
-
+	if err := file.Close(); err != nil {
+		log.Println(err)
+	}
 }

@@ -1,47 +1,57 @@
 package main
 
 import (
+	crand "crypto/rand"
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/models"
 	"log"
-	"os"
+	"math"
+	"math/big"
+	"math/rand"
 	"strconv"
 	"sync"
+	"time"
 )
 
 func main() {
-	wg := sync.WaitGroup{}
+	wg := new(sync.WaitGroup)
+	m := new(sync.Mutex)
 	log.Println("start")
 	for i := int64(0); i < config.MaxUniverse; i++ {
-		go func() {
-			wg.Add(1)
-			world(i)
+		wg.Add(1)
+		go func(i int64) {
+			time.Sleep(time.Duration(i*10) * time.Millisecond)
+			world(i, m)
 			wg.Done()
-		}()
+		}(i)
 	}
 	wg.Wait()
 	log.Println("end")
 }
 
-func world(i int64) {
+func world(i int64, m *sync.Mutex) {
+	seed, _ := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
+	ra := rand.New(rand.NewSource(seed.Int64()))
+
 	var u models.Universe
-	u.Init(i)
+	u.Init(i, ra)
 
-	file, err := os.Open(config.LogPath + strconv.FormatInt(i, 10) + ".csv")
-	log.Println(config.LogPath + strconv.FormatInt(i, 10) + ".csv")
-	if err != nil {
-		log.Fatal(err)
-	}
+	fname := config.LogPath + strconv.FormatInt(i, 10) + ".csv"
 
-	models.LogInit(u)
+	/*cu := make(chan *models.Universe, 100)
+	cf := make(chan *os.File, 100)
+	defer close(cu)
+	defer close(cf)
+
+	go models.LogStepChan(cu, cf)*/
+
 	for i := 0; i < config.MaxSteps; i++ {
-		u.Step()
-		models.LogStep(u, file)
-	}
-	u.End()
-	models.LogEnd(u)
+		if i%100 == 0 {
+			m.Lock()
+			models.LogStep(&u, fname)
+			m.Unlock()
+		}
 
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
+		u.Step(ra)
 	}
 }

@@ -2,56 +2,51 @@ package models
 
 import (
 	"github.com/sudnonk/go_mas/config"
+	"github.com/sudnonk/go_mas/utils"
+	"log"
 	"math/rand"
+	"strconv"
+	"time"
 )
 
 type Universe struct {
 	Id      int64
-	Agents  map[int64]Agent
+	Agents  map[int64]*Agent
 	StepNum int64
 }
 
-func (u *Universe) Init(id int64) {
+func (u *Universe) Init(id int64, ra *rand.Rand) {
 	u.Id = id
-	u.Agents = map[int64]Agent{}
+	u.Agents = make(map[int64]*Agent, config.MaxAgents)
 	u.StepNum = 0
 
-	c := make(chan Agent, 10000)
 	for i := int64(0); i < config.MaxAgents; i++ {
-		go NewAgent(i, c)
+		u.Agents[i] = NewAgent(i, ra)
 	}
-	for i := int64(0); i < config.MaxAgents; i++ {
-		u.Agents[i] = <-c
-	}
-	close(c)
 
-	u.makeNetwork()
+	u.MakeNetwork(ra)
 }
 
-func (u *Universe) makeNetwork() {
+func (u *Universe) MakeNetwork(ra *rand.Rand) {
 	//todo: より良いネットワーク
 	for _, a := range u.Agents {
-		b := map[int64]bool{a.Id: true}
-		for i := int64(0); i < rand.Int63n(config.MaxAgents); i++ {
-			id := rand.Int63n(config.MaxAgents)
-			if _, ok := b[id]; ok {
-				continue
-			}
-			b[id] = true
+		a.Following = utils.RandIntSlice(config.MaxAgents, int64(config.InitMaxFollowing), a.Id, ra)
+	}
+}
 
-			a.Following = append(a.Following, id)
+func (u *Universe) Step(ra *rand.Rand) {
+	u.StepNum++
+	if u.Id == 0 {
+		s := time.Now()
+
+		for _, a := range u.Agents {
+			a.Step(u.Agents, ra)
+		}
+
+		log.Println(strconv.FormatInt(u.Id, 10) + ": " + "step: " + strconv.FormatInt(u.StepNum, 10) + " " + strconv.FormatInt(time.Since(s).Nanoseconds(), 10) + " ns")
+	} else {
+		for _, a := range u.Agents {
+			a.Step(u.Agents, ra)
 		}
 	}
-}
-
-func (u *Universe) Step() {
-	u.StepNum++
-
-	for _, a := range u.Agents {
-		a.Step(u.Agents)
-	}
-}
-
-func (u *Universe) End() {
-
 }
