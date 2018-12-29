@@ -47,11 +47,10 @@ func world(i int64, m *sync.Mutex) {
 
 	for i := 0; i < config.MaxSteps; i++ {
 		if i%100 == 0 {
-			m.Lock()
-			models.LogStep(&u, fname)
-			m.Unlock()
+			models.LogStep(&u, fname, m)
 		}
 
 		u.Step(ra)
 	}
+	models.LogStep(&u, fname, m)
 }

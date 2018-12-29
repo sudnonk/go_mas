@@ -4,6 +4,7 @@ import (
 	"github.com/sakura-internet/go-rison"
 	"log"
 	"os"
+	"sync"
 )
 
 func LogStepChan(cu chan *Universe, cf chan *os.File) {
@@ -26,7 +27,7 @@ func LogStepChan(cu chan *Universe, cf chan *os.File) {
 	}
 }
 
-func LogStep(u *Universe, fname string) {
+func LogStep(u *Universe, fname string, m *sync.Mutex) {
 	lr := []byte("\n")
 	q := []byte("=")
 	var l []byte
@@ -37,7 +38,9 @@ func LogStep(u *Universe, fname string) {
 	}
 	l = append(l, lr...)
 
+	m.Lock()
 	writeLog(u.Id, &l, fname)
+	m.Unlock()
 }
 
 func writeLog(id int64, data *[]byte, fname string) {
