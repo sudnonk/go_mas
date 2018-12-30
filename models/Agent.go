@@ -61,7 +61,7 @@ func (a *Agent) mix(diff float64, ra *rand.Rand) {
 		//a:100,0.7 a2:0 -> a:30
 		a.Ideology -= utils.Round(diff * a.Receptivity * mixture)
 	} else if diff == 0 {
-
+		a.Receptivity -= a.Receptivity * mixture * config.Pride
 	} else {
 		//a:0,0.7 a2:100 -> a:70
 		a.Ideology += utils.Round(math.Abs(diff) * a.Receptivity * mixture)
