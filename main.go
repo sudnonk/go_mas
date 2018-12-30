@@ -36,8 +36,6 @@ func world(id int64, m *sync.Mutex) {
 	var u models.Universe
 	u.Init(id, ra)
 
-	fname := config.LogPath + strconv.FormatInt(id, 10) + ".csv"
-
 	/*cu := make(chan *models.Universe, 100)
 	cf := make(chan *os.File, 100)
 	defer close(cu)
@@ -45,10 +43,13 @@ func world(id int64, m *sync.Mutex) {
 
 	go models.LogStepChan(cu, cf)*/
 
+	ids := strconv.FormatInt(id, 10)
+	var fname string
 	for i := 0; i < config.MaxSteps; i++ {
 		if i%100 == 0 {
-			fname = config.LogPath + strconv.FormatInt(id, 10) + "_step" + strconv.Itoa(i) + ".csv"
+			fname = config.LogPath + ids + "_step" + strconv.Itoa(i) + ".csv"
 		}
+		log.Println(ids + " step:" + strconv.Itoa(i))
 		models.LogStep(&u, fname, m)
 		u.Step(ra)
 	}
