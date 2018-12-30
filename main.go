@@ -29,14 +29,14 @@ func main() {
 	log.Println("end")
 }
 
-func world(i int64, m *sync.Mutex) {
+func world(id int64, m *sync.Mutex) {
 	seed, _ := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
 	ra := rand.New(rand.NewSource(seed.Int64()))
 
 	var u models.Universe
-	u.Init(i, ra)
+	u.Init(id, ra)
 
-	fname := config.LogPath + strconv.FormatInt(i, 10) + ".csv"
+	fname := config.LogPath + strconv.FormatInt(id, 10) + ".csv"
 
 	/*cu := make(chan *models.Universe, 100)
 	cf := make(chan *os.File, 100)
@@ -47,9 +47,9 @@ func world(i int64, m *sync.Mutex) {
 
 	for i := 0; i < config.MaxSteps; i++ {
 		if i%100 == 0 {
-			models.LogStep(&u, fname, m)
+			fname = config.LogPath + strconv.FormatInt(id, 10) + "_step" + strconv.Itoa(i) + ".csv"
 		}
-
+		models.LogStep(&u, fname, m)
 		u.Step(ra)
 	}
 	models.LogStep(&u, fname, m)
