@@ -2,6 +2,7 @@ package main
 
 import (
 	crand "crypto/rand"
+	"flag"
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/models"
 	"log"
@@ -14,6 +15,9 @@ import (
 )
 
 func main() {
+	flag.Parse()
+	outDir := flag.Arg(0)
+
 	wg := new(sync.WaitGroup)
 	m := new(sync.Mutex)
 	log.Println("start")
@@ -21,7 +25,7 @@ func main() {
 		wg.Add(1)
 		go func(i int64) {
 			time.Sleep(time.Duration(i*10) * time.Millisecond)
-			world(i, m)
+			world(i, m, outDir)
 			wg.Done()
 		}(i)
 	}
@@ -29,7 +33,7 @@ func main() {
 	log.Println("end")
 }
 
-func world(id int64, m *sync.Mutex) {
+func world(id int64, m *sync.Mutex, outDir string) {
 	seed, _ := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
 	ra := rand.New(rand.NewSource(seed.Int64()))
 
@@ -44,10 +48,11 @@ func world(id int64, m *sync.Mutex) {
 	go models.LogStepChan(cu, cf)*/
 
 	ids := strconv.FormatInt(id, 10)
+	prefix := outDir + ids + "_step"
 	var fname string
 	for i := 0; i < config.MaxSteps; i++ {
 		if i%100 == 0 {
-			fname = config.LogPath + ids + "_step" + strconv.Itoa(i) + ".csv"
+			fname = prefix + strconv.Itoa(i) + ".csv"
 		}
 		log.Println(ids + " step:" + strconv.Itoa(i))
 		models.LogStep(&u, fname, m)
