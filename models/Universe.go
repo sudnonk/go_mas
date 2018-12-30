@@ -3,10 +3,7 @@ package models
 import (
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/utils"
-	"log"
 	"math/rand"
-	"strconv"
-	"time"
 )
 
 type Universe struct {
@@ -36,17 +33,8 @@ func (u *Universe) MakeNetwork(ra *rand.Rand) {
 
 func (u *Universe) Step(ra *rand.Rand) {
 	u.StepNum++
-	if u.Id == 0 {
-		s := time.Now()
 
-		for _, a := range u.Agents {
-			a.Step(u.Agents, ra)
-		}
-
-		log.Println(strconv.FormatInt(u.Id, 10) + ": " + "step: " + strconv.FormatInt(u.StepNum, 10) + " " + strconv.FormatInt(time.Since(s).Nanoseconds(), 10) + " ns")
-	} else {
-		for _, a := range u.Agents {
-			a.Step(u.Agents, ra)
-		}
+	for _, a := range u.Agents {
+		a.Step(u.Agents, ra)
 	}
 }

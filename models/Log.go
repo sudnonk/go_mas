@@ -4,6 +4,7 @@ import (
 	"github.com/sakura-internet/go-rison"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -44,6 +45,7 @@ func LogStep(u *Universe, fname string, m *sync.Mutex) {
 }
 
 func writeLog(id int64, data *[]byte, fname string) {
+	log.Println(strconv.FormatInt(id, 10) + " logging...")
 	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Println(id, err)
@@ -57,4 +59,5 @@ func writeLog(id int64, data *[]byte, fname string) {
 	if err := file.Close(); err != nil {
 		log.Println(id, err)
 	}
+	log.Println(strconv.FormatInt(id, 10) + " logged!")
 }
