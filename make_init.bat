@@ -1,0 +1,1 @@
+go build -o c:\go_mas\init.exe init\init.go

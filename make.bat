@@ -1,1 +1,1 @@
-go build -o C:\go_mas\mas2.exe main.go
+go build -o C:\go_mas\mas.exe main.go
