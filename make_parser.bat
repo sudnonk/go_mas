@@ -1,0 +1,1 @@
+go build -o c:\go_mas\parser.exe parser\parser.go

@@ -21,6 +21,8 @@ func main() {
 	wg := new(sync.WaitGroup)
 	m := new(sync.Mutex)
 	log.Println("start")
+	//world(0, m, outDir)
+
 	for i := int64(0); i < config.MaxUniverse; i++ {
 		wg.Add(1)
 		go func(i int64) {

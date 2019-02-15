@@ -3,9 +3,11 @@ package models
 import (
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/utils"
+	"log"
 	"math"
 	"math/rand"
 	"sort"
+	"time"
 )
 
 type Agent struct {
@@ -24,6 +26,7 @@ type Agent struct {
 }
 
 func (a *Agent) Step(as map[int64]*Agent, ra *rand.Rand) {
+	s := time.Now().Nanosecond()
 	for _, aID := range a.Following {
 		if a.HP <= 0 {
 			break
@@ -33,13 +36,26 @@ func (a *Agent) Step(as map[int64]*Agent, ra *rand.Rand) {
 		a.mix(diff, ra)                                           //思想が混ざる
 	}
 
+	//1秒以上かかったら
+	if time.Now().Nanosecond()-s > 1000000000 {
+		log.Println("HP process took > 1s")
+	}
+
+	s = time.Now().Nanosecond()
 	//体力がなくなると違うイデオロギーのフォローを外す
 	if a.HP <= 0 {
 		a.unfollowDifferentIdeology(as)
 	}
 
+	//1秒以上かかったら
+	if time.Now().Nanosecond()-s > 1000000000 {
+		log.Println("Unfollow process took > 1s")
+	}
+
 	//受容性が高い人ほど高い値が出る
 	followCriteria := a.Receptivity * utils.RandNormDecimal(ra)
+
+	s = time.Now().Nanosecond()
 
 	if followCriteria > 0.7 {
 		a.followDifferentIdeology(as, ra)
@@ -47,6 +63,11 @@ func (a *Agent) Step(as map[int64]*Agent, ra *rand.Rand) {
 		a.followInfluencer(as)
 	} else {
 		a.followNearIdeology(as, ra)
+	}
+
+	//1秒以上かかったら
+	if time.Now().Nanosecond()-s > 1000000000 {
+		log.Println("Follow process took > 1s")
 	}
 
 	a.recover() //毎ターンの回復
@@ -61,7 +82,7 @@ func (a *Agent) mix(diff float64, ra *rand.Rand) {
 		//a:100,0.7 a2:0 -> a:30
 		a.Ideology -= utils.Round(diff * a.Receptivity * mixture)
 	} else if diff == 0 {
-		a.Receptivity -= a.Receptivity * mixture * config.Pride
+		//a.Receptivity -= a.Receptivity * mixture * config.Pride
 	} else {
 		//a:0,0.7 a2:100 -> a:70
 		a.Ideology += utils.Round(math.Abs(diff) * a.Receptivity * mixture)
@@ -88,58 +109,46 @@ func (a *Agent) unfollowDifferentIdeology(as map[int64]*Agent) {
 	}
 }
 
-//近い意見の人をフォローする
+//近い意見の人をフォローする（自分とのイデオロギー差が最小の人をフォローする）
 func (a *Agent) followNearIdeology(as map[int64]*Agent, ra *rand.Rand) {
-	maxI := int64(float64(a.Ideology) * (1.0 + config.NearCriteria))
-	minI := int64(float64(a.Ideology) * (1.0 - config.NearCriteria))
+	minI := int64(config.MaxIdeology + 1)
 
-	checked := make(map[int64]struct{}, config.MaxAgents)
-	checked[a.Id] = struct{}{}
-	for _, v := range a.Following {
-		checked[v] = struct{}{}
-	}
-	for true {
-		r := ra.Int63n(config.MaxAgents)
-		if _, ok := checked[r]; ok {
-			continue
+	d := int64(len(as) + 1)
+	minR := d
+
+	for r := int64(0); r < config.MaxAgents; r++ {
+		if utils.Abs(as[r].Ideology-a.Ideology) < minI {
+			minI = utils.Abs(as[r].Ideology - a.Ideology)
+			minR = r
 		}
-
-		if as[r].Ideology < maxI || as[r].Ideology > minI {
-			a.Following = append(a.Following, r)
-			return
-		}
-
-		checked[r] = struct{}{}
 	}
 
-	//todo: フォローすべき相手が見つからなかった場合
+	if minR == d {
+		//todo: フォローすべき相手が見つからなかった場合
+	} else {
+		a.Following = append(a.Following, minR)
+	}
 }
 
-//違う意見の人をフォローする
+//違う意見の人をフォローする（自分とのイデオロギー差が最大の人をフォローする）
 func (a *Agent) followDifferentIdeology(as map[int64]*Agent, ra *rand.Rand) {
-	maxI := int64(float64(a.Ideology) * (1.0 + config.FarCriteria))
-	minI := int64(float64(a.Ideology) * (1.0 - config.FarCriteria))
+	maxI := int64(config.MaxIdeology + 1)
 
-	checked := make(map[int64]struct{}, config.MaxAgents)
-	checked[a.Id] = struct{}{}
-	for _, v := range a.Following {
-		checked[v] = struct{}{}
-	}
-	for true {
-		r := ra.Int63n(config.MaxAgents)
-		if _, ok := checked[r]; ok {
-			continue
+	d := int64(len(as) + 1)
+	maxR := d
+
+	for r := int64(0); r < config.MaxAgents; r++ {
+		if utils.Abs(as[r].Ideology-a.Ideology) > maxI {
+			maxI = as[r].Ideology
+			maxR = r
 		}
-
-		if as[r].Ideology > maxI || as[r].Ideology < minI {
-			a.Following = append(a.Following, r)
-			return
-		}
-
-		checked[r] = struct{}{}
 	}
 
-	//todo: フォローすべき相手が見つからなかった場合
+	if maxR == d {
+		//todo: フォローすべき相手が見つからなかった場合
+	} else {
+		a.Following = append(a.Following, maxR)
+	}
 }
 
 //フォローしてる人が多い人をフォローする
@@ -161,12 +170,13 @@ func (a *Agent) followInfluencer(as map[int64]*Agent) {
 }
 
 func NewAgent(id int64, ra *rand.Rand) *Agent {
+	hp := ra.Int63n(config.MaxHP)
 	return &Agent{
 		Id:          id,
 		Following:   []int64{},
-		HP:          ra.Int63n(config.MaxHP),
-		Ideology:    ra.Int63n(config.MaxIdeology),
+		HP:          hp,
+		Ideology:    utils.Round(utils.RandNormDecimal(ra) * config.MaxIdeology),
 		Receptivity: utils.RandNormDecimal(ra),
-		Recovery:    ra.Int63n(config.MaxRecovery),
+		Recovery:    utils.Round(float64(hp) * config.RecoveryRate),
 	}
 }

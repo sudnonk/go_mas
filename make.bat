@@ -1,0 +1,1 @@
+go build -o C:\go_mas\mas2.exe main.go
