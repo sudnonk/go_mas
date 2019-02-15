@@ -1,8 +1,6 @@
 package models
 
 import (
-	"github.com/sudnonk/go_mas/config"
-	"github.com/sudnonk/go_mas/utils"
 	"math/rand"
 )
 
@@ -11,22 +9,9 @@ type Universe struct {
 	Agents map[int64]*Agent
 }
 
-func (u *Universe) Init(id int64, ra *rand.Rand) {
+func (u *Universe) Init(id int64, as map[int64]*Agent) {
 	u.Id = id
-	u.Agents = make(map[int64]*Agent, config.MaxAgents)
-
-	for i := int64(0); i < config.MaxAgents; i++ {
-		u.Agents[i] = NewAgent(i, ra)
-	}
-
-	u.MakeNetwork(ra)
-}
-
-func (u *Universe) MakeNetwork(ra *rand.Rand) {
-	//todo: より良いネットワーク
-	for _, a := range u.Agents {
-		a.Following = utils.RandIntSlice(config.MaxAgents, int64(config.InitMaxFollowing), a.Id, ra)
-	}
+	u.Agents = as
 }
 
 func (u *Universe) Step(ra *rand.Rand) {
