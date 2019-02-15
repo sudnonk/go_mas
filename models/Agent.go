@@ -17,6 +17,8 @@ type Agent struct {
 	Following []int64 `json:"f"`
 	//体力
 	HP int64 `json:"h"`
+	//最大体力
+	MaxHP int64 `json:"m"`
 	//思想
 	Ideology int64 `json:"i"`
 	//受容しやすさ
@@ -91,7 +93,12 @@ func (a *Agent) mix(diff float64, ra *rand.Rand) {
 
 //毎ターンの回復
 func (a *Agent) recover() {
-	a.HP += a.Recovery
+	h := a.HP + a.Recovery
+	if h >= a.MaxHP {
+		a.HP = a.MaxHP
+	} else {
+		a.HP = h
+	}
 }
 
 func (a *Agent) unfollowDifferentIdeology(as map[int64]*Agent) {
@@ -184,6 +191,7 @@ func NewAgent(id int64, ra *rand.Rand, isNorm bool) *Agent {
 		Id:          id,
 		Following:   []int64{},
 		HP:          hp,
+		MaxHP:       hp,
 		Ideology:    i,
 		Receptivity: r,
 		Recovery:    utils.Round(float64(hp) * config.RecoveryRate),
