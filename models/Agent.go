@@ -169,14 +169,23 @@ func (a *Agent) followInfluencer(as map[int64]*Agent) {
 	a.Following = append(a.Following, maxA)
 }
 
-func NewAgent(id int64, ra *rand.Rand) *Agent {
+func NewAgent(id int64, ra *rand.Rand, isNorm bool) *Agent {
 	hp := ra.Int63n(config.MaxHP)
+	var i int64
+	var r float64
+	if isNorm {
+		i = utils.Round(utils.RandNormDecimal(ra) * config.MaxIdeology)
+		r = utils.RandNormDecimal(ra)
+	} else {
+		i = utils.Round(ra.Float64() * config.MaxIdeology)
+		r = ra.Float64()
+	}
 	return &Agent{
 		Id:          id,
 		Following:   []int64{},
 		HP:          hp,
-		Ideology:    utils.Round(utils.RandNormDecimal(ra) * config.MaxIdeology),
-		Receptivity: utils.RandNormDecimal(ra),
+		Ideology:    i,
+		Receptivity: r,
 		Recovery:    utils.Round(float64(hp) * config.RecoveryRate),
 	}
 }

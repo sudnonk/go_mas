@@ -16,4 +16,6 @@ const (
 
 	NearCriteria = 0.2
 	FarCriteria  = 0.8
+
+	IsNorm = true
 )

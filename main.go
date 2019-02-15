@@ -125,7 +125,7 @@ func genRandomAgent(ra *rand.Rand) map[int64]*models.Agent {
 	Ags := make(map[int64]*models.Agent, config.MaxAgents)
 
 	for i := int64(0); i < config.MaxAgents; i++ {
-		Ags[i] = models.NewAgent(i, ra)
+		Ags[i] = models.NewAgent(i, ra, config.IsNorm)
 	}
 
 	MakeNetwork(Ags, ra)
