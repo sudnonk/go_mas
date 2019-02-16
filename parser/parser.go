@@ -79,8 +79,10 @@ func main() {
 			err = ideologyRange(r, o, w, s, ts)
 		case "list":
 			err = list(r, o, w, s)
+		case "diversity":
+			err = diversity(r, o, w, s)
 		default:
-			return fmt.Errorf("type must be (fanatic | hp | ideology | range | list)")
+			return fmt.Errorf("type must be (fanatic | hp | ideology | range | list | diversity)")
 		}
 
 		return err
@@ -532,6 +534,52 @@ func ideologyRange(r *bufio.Reader, outdir string, world int64, step int64, targ
 					return err
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func diversity(r *bufio.Reader, outdir string, world int64, step int64) error {
+	ds := string(os.PathSeparator)
+
+	log.Println("diversity start.")
+	log.Println("Creating Files...")
+	td := fmt.Sprintf("%sdiversity%s", outdir, ds)
+	err := ensureDir(td)
+	file := fmt.Sprintf("%s%d_step_%03d.csv", td, world, step)
+	err = createFile(file)
+	if err != nil {
+		return err
+	}
+	err = writeFile(file, fmt.Sprintf("# step, Number of Ideology\n"))
+
+	log.Println("Parsing...")
+	for s := int64(0); ; s++ {
+		is := make(map[int64]struct{}, config.MaxIdeology+1)
+
+		line, err := r.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		if err == io.EOF && len(line) == 0 {
+			break
+		}
+
+		as, err := parseLineAll(&line)
+		if err != nil {
+			return err
+		}
+
+		for _, a := range as {
+			is[a.Ideology] = struct{}{}
+		}
+
+		d := fmt.Sprintf("%d,%d\n", s+step, len(is))
+
+		if err := writeFile(file, d); err != nil {
+			return err
 		}
 	}
 
