@@ -49,7 +49,7 @@ func main() {
 			return fmt.Errorf("-f and -t and -s and -o is required")
 		}
 
-		re := regexp.MustCompile(`.+\\(\d)_step(\d)\.csv$`)
+		re := regexp.MustCompile(`.+\\(\d+)_step(\d+)\.csv$`)
 		rs := re.FindStringSubmatch(fn)
 		if len(rs) != 3 {
 			return fmt.Errorf("file name invalid")
