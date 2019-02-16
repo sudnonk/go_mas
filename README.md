@@ -9,7 +9,7 @@
 受容性は0-1のfloat64で、正規分布
 
 ## main.exe
-メインのプログラム
+メインのプログラム。この`exe`と同じ階層に`config.json`を置くこと。
 
 `main.exe ourDir initPath`
 

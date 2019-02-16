@@ -22,7 +22,7 @@ var config Config
 
 func Parse(confPath string) error {
 	if confPath == "" {
-		confPath = "../config.json"
+		confPath = "./config.json"
 	}
 
 	bytes, err := ioutil.ReadFile(confPath)
