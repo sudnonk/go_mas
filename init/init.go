@@ -47,9 +47,9 @@ func main() {
 }
 
 func genRandomAgent(ra *rand.Rand, isNorm bool) map[int64]*models.Agent {
-	Ags := make(map[int64]*models.Agent, config.MaxAgents)
+	Ags := make(map[int64]*models.Agent, config.MaxAgents())
 
-	for i := int64(0); i < config.MaxAgents; i++ {
+	for i := int64(0); i < config.MaxAgents(); i++ {
 		Ags[i] = models.NewAgent(i, ra, isNorm)
 	}
 
@@ -60,7 +60,7 @@ func genRandomAgent(ra *rand.Rand, isNorm bool) map[int64]*models.Agent {
 func MakeNetwork(as map[int64]*models.Agent, ra *rand.Rand) {
 	//todo: より良いネットワーク
 	for _, a := range as {
-		a.Following = utils.RandIntSlice(config.MaxAgents, int64(config.InitMaxFollowing), a.Id, ra)
+		a.Following = utils.RandIntSlice(config.MaxAgents(), int64(config.InitMaxFollowing()), a.Id, ra)
 	}
 }
 

@@ -167,7 +167,7 @@ func parseLineAll(line *[]byte) (map[int64]*models.Agent, error) {
 	delimiter := []byte("=")
 	as := bytes.Split(*line, delimiter)
 
-	agents := make(map[int64]*models.Agent, config.MaxAgents)
+	agents := make(map[int64]*models.Agent, config.MaxAgents())
 	for _, a := range as {
 		if len(a) < 5 {
 			continue
@@ -285,7 +285,7 @@ func list(r *bufio.Reader, outdir string, world int64, step int64) error {
 		}
 
 		is := make(map[int64]int64)
-		for i := int64(0); i <= config.MaxIdeology; i++ {
+		for i := int64(0); i <= config.MaxIdeology(); i++ {
 			is[i] = 0
 		}
 		for _, ag := range ags {
@@ -342,8 +342,8 @@ func fanatic(r *bufio.Reader, outdir string, world int64, step int64) error {
 
 	log.Println("Parsing...")
 	for s := int64(0); ; s++ {
-		is := make(map[int64]int64, config.MaxIdeology+1)
-		for i := int64(0); i < config.MaxIdeology; i++ {
+		is := make(map[int64]int64, config.MaxIdeology()+1)
+		for i := int64(0); i < config.MaxIdeology(); i++ {
 			is[i] = int64(0)
 		}
 
@@ -556,7 +556,7 @@ func diversity(r *bufio.Reader, outdir string, world int64, step int64) error {
 
 	log.Println("Parsing...")
 	for s := int64(0); ; s++ {
-		is := make(map[int64]struct{}, config.MaxIdeology+1)
+		is := make(map[int64]struct{}, config.MaxIdeology()+1)
 
 		line, err := r.ReadBytes('\n')
 		if err != nil && err != io.EOF {

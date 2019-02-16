@@ -5,6 +5,7 @@ import (
 	"bytes"
 	crand "crypto/rand"
 	"flag"
+	"fmt"
 	"github.com/sakura-internet/go-rison"
 	"github.com/sudnonk/go_mas/config"
 	"github.com/sudnonk/go_mas/models"
@@ -15,7 +16,6 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -23,14 +23,20 @@ import (
 func main() {
 	flag.Parse()
 	outDir := flag.Arg(0)
-
 	initPath := flag.Arg(1)
+	confPath := flag.Arg(2)
+
+	err := config.Parse(confPath)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	wg := new(sync.WaitGroup)
 	m := new(sync.Mutex)
 	log.Println("start")
 
-	for i := int64(0); i < config.MaxUniverse; i++ {
+	for i := int64(0); i < config.MaxUniverse(); i++ {
 		wg.Add(1)
 		go func(i int64) {
 			time.Sleep(time.Duration(i*10) * time.Millisecond)
@@ -56,14 +62,13 @@ func world(id int64, m *sync.Mutex, outDir string, initPath string) {
 	var u models.Universe
 	u.Init(id, initData)
 
-	ids := strconv.FormatInt(id, 10)
-	prefix := outDir + ids + "_step"
+	prefix := fmt.Sprintf("%s%d_step", outDir, id)
 	var fname string
-	for i := 0; i < config.MaxSteps; i++ {
+	for i := int64(0); i < config.MaxSteps(); i++ {
 		if i%100 == 0 {
-			fname = prefix + strconv.Itoa(i) + ".csv"
+			fname = fmt.Sprintf("%s%d.csv", prefix, i)
 		}
-		log.Println(ids + " step:" + strconv.Itoa(i))
+		log.Printf("%d step: %d", id, i)
 		models.LogStep(&u, fname, m)
 		u.Step(ra)
 	}
@@ -103,7 +108,7 @@ func parseLineAll(line *[]byte) (map[int64]*models.Agent, error) {
 	delimiter := []byte("=")
 	as := bytes.Split(*line, delimiter)
 
-	agents := make(map[int64]*models.Agent, config.MaxAgents)
+	agents := make(map[int64]*models.Agent, config.MaxAgents())
 	for _, a := range as {
 		if len(a) < 5 {
 			continue
@@ -122,10 +127,10 @@ func parseLineAll(line *[]byte) (map[int64]*models.Agent, error) {
 }
 
 func genRandomAgent(ra *rand.Rand) map[int64]*models.Agent {
-	Ags := make(map[int64]*models.Agent, config.MaxAgents)
+	Ags := make(map[int64]*models.Agent, config.MaxAgents())
 
-	for i := int64(0); i < config.MaxAgents; i++ {
-		Ags[i] = models.NewAgent(i, ra, config.IsNorm)
+	for i := int64(0); i < config.MaxAgents(); i++ {
+		Ags[i] = models.NewAgent(i, ra, config.IsNorm())
 	}
 
 	MakeNetwork(Ags, ra)
@@ -135,6 +140,6 @@ func genRandomAgent(ra *rand.Rand) map[int64]*models.Agent {
 func MakeNetwork(as map[int64]*models.Agent, ra *rand.Rand) {
 	//todo: より良いネットワーク
 	for _, a := range as {
-		a.Following = utils.RandIntSlice(config.MaxAgents, int64(config.InitMaxFollowing), a.Id, ra)
+		a.Following = utils.RandIntSlice(config.MaxAgents(), int64(config.InitMaxFollowing()), a.Id, ra)
 	}
 }

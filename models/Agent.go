@@ -118,12 +118,12 @@ func (a *Agent) unfollowDifferentIdeology(as map[int64]*Agent) {
 
 //近い意見の人をフォローする（自分とのイデオロギー差が最小の人をフォローする）
 func (a *Agent) followNearIdeology(as map[int64]*Agent, ra *rand.Rand) {
-	minI := int64(config.MaxIdeology + 1)
+	minI := int64(config.MaxIdeology() + 1)
 
 	d := int64(len(as) + 1)
 	minR := d
 
-	for r := int64(0); r < config.MaxAgents; r++ {
+	for r := int64(0); r < config.MaxAgents(); r++ {
 		if utils.Abs(as[r].Ideology-a.Ideology) < minI {
 			minI = utils.Abs(as[r].Ideology - a.Ideology)
 			minR = r
@@ -139,12 +139,12 @@ func (a *Agent) followNearIdeology(as map[int64]*Agent, ra *rand.Rand) {
 
 //違う意見の人をフォローする（自分とのイデオロギー差が最大の人をフォローする）
 func (a *Agent) followDifferentIdeology(as map[int64]*Agent, ra *rand.Rand) {
-	maxI := int64(config.MaxIdeology + 1)
+	maxI := int64(config.MaxIdeology() + 1)
 
 	d := int64(len(as) + 1)
 	maxR := d
 
-	for r := int64(0); r < config.MaxAgents; r++ {
+	for r := int64(0); r < config.MaxAgents(); r++ {
 		if utils.Abs(as[r].Ideology-a.Ideology) > maxI {
 			maxI = as[r].Ideology
 			maxR = r
@@ -177,14 +177,14 @@ func (a *Agent) followInfluencer(as map[int64]*Agent) {
 }
 
 func NewAgent(id int64, ra *rand.Rand, isNorm bool) *Agent {
-	hp := ra.Int63n(config.MaxHP)
+	hp := ra.Int63n(config.MaxHP())
 	var i int64
 	var r float64
 	if isNorm {
-		i = utils.Round(utils.RandNormDecimal(ra) * config.MaxIdeology)
+		i = utils.Round(utils.RandNormDecimal(ra) * float64(config.MaxIdeology()))
 		r = utils.RandNormDecimal(ra)
 	} else {
-		i = utils.Round(ra.Float64() * config.MaxIdeology)
+		i = utils.Round(ra.Float64() * float64(config.MaxIdeology()))
 		r = ra.Float64()
 	}
 	return &Agent{
@@ -194,6 +194,6 @@ func NewAgent(id int64, ra *rand.Rand, isNorm bool) *Agent {
 		MaxHP:       hp,
 		Ideology:    i,
 		Receptivity: r,
-		Recovery:    utils.Round(float64(hp) * config.RecoveryRate),
+		Recovery:    utils.Round(float64(hp) * config.RecoveryRate()),
 	}
 }
