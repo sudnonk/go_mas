@@ -12,6 +12,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
+	"strconv"
 )
 
 func main() {
@@ -28,10 +30,6 @@ func main() {
 			Name:  "outdir, o",
 			Usage: "Full path of outdir. Ensure last letter is DIRECTORY_SEPARATOR",
 		},
-		cli.Int64Flag{
-			Name:  "step,s",
-			Usage: "if the file has step 0-99, set 0. 100-199, set 100",
-		},
 		cli.Int64SliceFlag{
 			Name:  "target,t",
 			Usage: "Target agent ids",
@@ -40,19 +38,27 @@ func main() {
 			Name:  "type",
 			Usage: "list, hp, fanatic,ideology,range",
 		},
-		cli.Int64Flag{
-			Name:  "world,w",
-			Usage: "World number",
-		},
 	}
 
 	app.Action = func(ctx *cli.Context) (err error) {
 		err = nil
 
-		fn, o, s, w, t, ts := ctx.String("filename"), ctx.String("outdir"), ctx.Int64("step"), ctx.Int64("world"), ctx.String("type"), ctx.Int64Slice("target")
+		fn, o, t, ts := ctx.String("filename"), ctx.String("outdir"), ctx.String("type"), ctx.Int64Slice("target")
 
 		if !checkArgs(fn, o, t) {
 			return fmt.Errorf("-f and -t and -s and -o is required")
+		}
+
+		re := regexp.MustCompile(`.+\\(\d)_step(\d)\.csv$`)
+		rs := re.FindStringSubmatch(fn)
+		if len(rs) != 3 {
+			return fmt.Errorf("file name invalid")
+		}
+
+		w, err := strconv.ParseInt(rs[1], 10, 64)
+		s, err := strconv.ParseInt(rs[2], 10, 64)
+		if err != nil {
+			return err
 		}
 
 		f, r, err := openFile(fn)
