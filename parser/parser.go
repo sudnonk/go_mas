@@ -591,3 +591,55 @@ func diversity(r *bufio.Reader, outdir string, world int64, step int64) error {
 
 	return nil
 }
+
+func all(r *bufio.Reader, outdir string, world int64, step int64, targets []int64) error {
+	ds := string(os.PathSeparator)
+
+	var err error
+	var list string
+
+	log.Println("Creating Files...")
+	td := fmt.Sprintf("%slist%s", outdir, ds)
+	err = ensureDir(td)
+	list = fmt.Sprintf("%s%d_list_%03d.csv", td, world, step)
+	err = createFile(list)
+	if err != nil {
+		return err
+	}
+
+	log.Println("Parsing,,,")
+	err = writeFile(list, fmt.Sprintf("ID, Receptivity,Ideoloigy,len(Following), HP, Recovery\n"))
+	for s := int64(0); ; s++ {
+		line, err := r.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		if err == io.EOF && len(line) == 0 {
+			break
+		}
+
+		ags, err := parseLineAll(&line)
+		if err != nil {
+			return err
+		}
+
+		is := make(map[int64]int64)
+		for i := int64(0); i <= config.MaxIdeology(); i++ {
+			is[i] = 0
+		}
+		for _, ag := range ags {
+			if s == int64(0) {
+				err = writeFile(list, fmt.Sprintf("%d,%f,%d,%d,%d,%d\n", ag.Id, ag.Receptivity, ag.Ideology, len(ag.Following), ag.HP, ag.Recovery))
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+		break
+	}
+	log.Println("Parse end.")
+
+	return nil
+}
