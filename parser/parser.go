@@ -50,23 +50,25 @@ func main() {
 			return fmt.Errorf("-f and -t and -s and -o is required")
 		}*/
 
-		errChan := make(chan error, 1)
+		errChan := make(chan error)
 
 		wg := &sync.WaitGroup{}
 		for _, fn := range fns {
+			wg.Add(1)
 			go func(fn string, o string, t string, ts []int64) {
-				wg.Add(1)
+				defer wg.Done()
 				log.Printf("%s", fn)
 				err := run(fn, o, t, ts)
 				errChan <- err
-				wg.Done()
 			}(fn, o, t, ts)
+		}
+		wg.Wait()
 
-			if err := <-errChan; err != nil {
+		for err := range errChan {
+			if err != nil {
 				return err
 			}
 		}
-		wg.Wait()
 
 		return nil
 	}
