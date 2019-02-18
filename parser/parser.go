@@ -22,7 +22,7 @@ func main() {
 
 	app.Name = "parser"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		cli.StringSliceFlag{
 			Name:  "filename, f",
 			Usage: "filename you want to parse",
 		},
@@ -43,57 +43,26 @@ func main() {
 	app.Action = func(ctx *cli.Context) (err error) {
 		err = nil
 
-		fn, o, t, ts := ctx.String("filename"), ctx.String("outdir"), ctx.String("type"), ctx.Int64Slice("target")
+		fns, o, t, ts := ctx.StringSlice("filename"), ctx.String("outdir"), ctx.String("type"), ctx.Int64Slice("target")
 
-		if !checkArgs(fn, o, t) {
+		/*if !checkArgs(fn, o, t) {
 			return fmt.Errorf("-f and -t and -s and -o is required")
+		}*/
+
+		errChan := make(chan error, 1)
+
+		for _, fn := range fns {
+			go func(fn string, o string, t string, ts []int64) {
+				err := run(fn, o, t, ts)
+				errChan <- err
+			}(fn, o, t, ts)
+
+			if err := <-errChan; err != nil {
+				return err
+			}
 		}
 
-		re := regexp.MustCompile(`.+\\(\d+)_step(\d+)\.csv$`)
-		rs := re.FindStringSubmatch(fn)
-		if len(rs) != 3 {
-			return fmt.Errorf("file name invalid")
-		}
-
-		w, err := strconv.ParseInt(rs[1], 10, 64)
-		s, err := strconv.ParseInt(rs[2], 10, 64)
-		if err != nil {
-			return err
-		}
-
-		f, r, err := openFile(fn)
-		if err != nil {
-			return err
-		}
-
-		if err = ensureDir(o); err != nil {
-			return err
-		}
-
-		defer func(f *os.File) {
-			err = closeFile(f)
-		}(f)
-
-		switch t {
-		case "fanatic":
-			err = fanatic(r, o, w, s)
-		case "hp":
-			err = hp(r, o, w, s, ts)
-		case "ideology":
-			err = ideology(r, o, w, s, ts)
-		case "range":
-			err = ideologyRange(r, o, w, s, ts)
-		case "list":
-			err = list(r, o, w, s)
-		case "diversity":
-			err = diversity(r, o, w, s)
-		case "all":
-			err = all(r, o, w, s, ts)
-		default:
-			return fmt.Errorf("type must be (fanatic | hp | ideology | range | list | diversity | all)")
-		}
-
-		return err
+		return nil
 	}
 
 	err := app.Run(os.Args)
@@ -102,14 +71,50 @@ func main() {
 	}
 }
 
-func checkArgs(args ...interface{}) bool {
-	for _, arg := range args {
-		if arg == "" {
-			return false
-		}
+func run(fn string, o string, t string, ts []int64) (err error) {
+	re := regexp.MustCompile(`.+\\(\d+)_step(\d+)\.csv$`)
+	rs := re.FindStringSubmatch(fn)
+	if len(rs) != 3 {
+		return fmt.Errorf("file name invalid")
 	}
 
-	return true
+	w, err := strconv.ParseInt(rs[1], 10, 64)
+	s, err := strconv.ParseInt(rs[2], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	f, r, err := openFile(fn)
+	if err != nil {
+		return err
+	}
+
+	if err = ensureDir(o); err != nil {
+		return err
+	}
+
+	switch t {
+	case "fanatic":
+		err = fanatic(r, o, w, s)
+	case "hp":
+		err = hp(r, o, w, s, ts)
+	case "ideology":
+		err = ideology(r, o, w, s, ts)
+	case "range":
+		err = ideologyRange(r, o, w, s, ts)
+	case "list":
+		err = list(r, o, w, s)
+	case "diversity":
+		err = diversity(r, o, w, s)
+	case "all":
+		err = all(r, o, w, s, ts)
+	default:
+		return fmt.Errorf("type must be (fanatic | hp | ideology | range | list | diversity | all)")
+	}
+
+	err = closeFile(f)
+
+	return err
 }
 
 func ensureDir(o string) error {

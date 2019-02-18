@@ -21,7 +21,7 @@
 
 `parser.exe -f filename -o outDir -t targets --type type`
 
-- `filename` : パースするファイルへのパス。
+- `filename` : パースするファイルへのパス。複数指定可
 - `outDir` : パース結果を出力するディレクトリ。末尾に`/`を付けること。
 - `targets`: パース対象のエージェントのID。複数指定するときは`-t agentId`を複数回指定する。
 - `type` : 以下のどれかを指定する
