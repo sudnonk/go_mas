@@ -87,8 +87,10 @@ func main() {
 			err = list(r, o, w, s)
 		case "diversity":
 			err = diversity(r, o, w, s)
+		case "all":
+			err = all(r, o, w, s, ts)
 		default:
-			return fmt.Errorf("type must be (fanatic | hp | ideology | range | list | diversity)")
+			return fmt.Errorf("type must be (fanatic | hp | ideology | range | list | diversity | all)")
 		}
 
 		return err
@@ -592,23 +594,60 @@ func diversity(r *bufio.Reader, outdir string, world int64, step int64) error {
 	return nil
 }
 
-func all(r *bufio.Reader, outdir string, world int64, step int64, targets []int64) error {
+func all(r *bufio.Reader, outdir string, world int64, step int64, targets []int64) (err error) {
 	ds := string(os.PathSeparator)
 
-	var err error
-	var list string
-
 	log.Println("Creating Files...")
-	td := fmt.Sprintf("%slist%s", outdir, ds)
-	err = ensureDir(td)
-	list = fmt.Sprintf("%s%d_list_%03d.csv", td, world, step)
-	err = createFile(list)
-	if err != nil {
-		return err
+
+	listDir := fmt.Sprintf("%slist%s", outdir, ds)
+	err = ensureDir(listDir)
+	listFile := fmt.Sprintf("%s%d_list_%03d.csv", listDir, world, step)
+	err = createFile(listFile)
+	listStr := fmt.Sprintf("ID, Receptivity,Ideoloigy,len(Following), HP, Recovery\n")
+
+	fanaticDir := fmt.Sprintf("%sfanatic%s", outdir, ds)
+	err = ensureDir(fanaticDir)
+	fanaticFile := fmt.Sprintf("%s%d_step_%03d.csv", fanaticDir, world, step)
+	err = createFile(fanaticFile)
+	fanaticStr := fmt.Sprintf("# step, Ideology, Fanatic\n")
+
+	diversityDir := fmt.Sprintf("%sdiversity%s", outdir, ds)
+	err = ensureDir(diversityDir)
+	diversityFile := fmt.Sprintf("%s%d_step_%03d.csv", diversityDir, world, step)
+	err = createFile(diversityFile)
+	diversityStr := fmt.Sprintf("# step, Number of Ideology\n")
+
+	hpDir := fmt.Sprintf("%shp%s", outdir, ds)
+	err = ensureDir(hpDir)
+	hpFile := make(map[int64]string)
+	hpStr := make(map[int64]string)
+
+	ideologyDir := fmt.Sprintf("%sideology%s", outdir, ds)
+	err = ensureDir(ideologyDir)
+	ideologyFile := make(map[int64]string)
+	ideologyStr := make(map[int64]string)
+
+	rangeDir := fmt.Sprintf("%srange%s", outdir, ds)
+	err = ensureDir(rangeDir)
+	rangeFile := make(map[int64]string)
+	rangeStr := make(map[int64]string)
+
+	for _, target := range targets {
+		hpFile[target] = fmt.Sprintf("%s%d_agent_%04d_step_%03d.csv", hpDir, world, target, step)
+		err = createFile(hpFile[target])
+		hpStr[target] = ""
+
+		ideologyFile[target] = fmt.Sprintf("%s%d_agent_%04d_step_%03d.csv", ideologyDir, world, target, step)
+		err = createFile(ideologyFile[target])
+		ideologyStr[target] = ""
+
+		rangeFile[target] = fmt.Sprintf("%s%d_agent_%04d_step_%03d.csv", rangeDir, world, target, step)
+		err = createFile(rangeFile[target])
+		rangeStr[target] = ""
 	}
 
 	log.Println("Parsing,,,")
-	err = writeFile(list, fmt.Sprintf("ID, Receptivity,Ideoloigy,len(Following), HP, Recovery\n"))
+
 	for s := int64(0); ; s++ {
 		line, err := r.ReadBytes('\n')
 		if err != nil && err != io.EOF {
@@ -619,26 +658,54 @@ func all(r *bufio.Reader, outdir string, world int64, step int64, targets []int6
 			break
 		}
 
-		ags, err := parseLineAll(&line)
-		if err != nil {
-			return err
-		}
-
-		is := make(map[int64]int64)
+		is := make(map[int64]int64, config.MaxIdeology()+1)
 		for i := int64(0); i <= config.MaxIdeology(); i++ {
 			is[i] = 0
 		}
+		is2 := make(map[int64]struct{}, config.MaxIdeology()+1)
+
+		ags, err := parseLineAll(&line)
 		for _, ag := range ags {
 			if s == int64(0) {
-				err = writeFile(list, fmt.Sprintf("%d,%f,%d,%d,%d,%d\n", ag.Id, ag.Receptivity, ag.Ideology, len(ag.Following), ag.HP, ag.Recovery))
+				listStr += fmt.Sprintf("%d,%f,%d,%d,%d,%d\n", ag.Id, ag.Receptivity, ag.Ideology, len(ag.Following), ag.HP, ag.Recovery)
 			}
 
-			if err != nil {
-				return err
+			if utils.InArray(ag.Id, targets) {
+				if s == int64(0) {
+					hpStr[ag.Id] += fmt.Sprintf("#Receptivity: %f\n#step, hp\n", ag.Receptivity)
+					ideologyStr[ag.Id] += fmt.Sprintf("#Receptivity: %f\n#step, ideology\n", ag.Receptivity)
+					rangeStr[ag.Id] += fmt.Sprintf("# Receptivity: %v\n# step, following_ideology\n", ag.Receptivity)
+				}
+
+				hpStr[ag.Id] += fmt.Sprintf("%d,%d\n", s+step, ag.HP)
+				ideologyStr[ag.Id] += fmt.Sprintf("%d,%d\n", s+step, ag.Ideology)
+
+				for _, a := range ag.Following {
+					agf := ags[a]
+					rangeStr[ag.Id] += fmt.Sprintf("%d,%d\n", s+step, agf.Ideology)
+				}
 			}
+
+			is[ag.Ideology]++
+			is2[ag.Ideology] = struct{}{}
 		}
-		break
+
+		for i, n := range is {
+			fanaticStr += fmt.Sprintf("%d,%d,%d\n", s+step, i, n)
+		}
+		diversityStr += fmt.Sprintf("%d,%d\n", s+step, len(is))
 	}
+
+	err = writeFile(listFile, listStr)
+	err = writeFile(fanaticFile, fanaticStr)
+	err = writeFile(diversityFile, diversityStr)
+
+	for _, t := range targets {
+		err = writeFile(hpFile[t], hpStr[t])
+		err = writeFile(ideologyFile[t], ideologyStr[t])
+		err = writeFile(rangeFile[t], rangeStr[t])
+	}
+
 	log.Println("Parse end.")
 
 	return nil
