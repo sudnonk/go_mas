@@ -19,7 +19,7 @@
 ## parser.exe
 ログをパースするプログラム
 
-`parser.exe -f filename -o outDir -s step -t targets --type type -w worldId`
+`parser.exe -f filename -o outDir -t targets --type type`
 
 - `filename` : パースするファイルへのパス。
 - `outDir` : パース結果を出力するディレクトリ。末尾に`/`を付けること。
