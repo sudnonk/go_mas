@@ -14,6 +14,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"sync"
 )
 
 func main() {
@@ -51,16 +52,21 @@ func main() {
 
 		errChan := make(chan error, 1)
 
+		wg := &sync.WaitGroup{}
 		for _, fn := range fns {
 			go func(fn string, o string, t string, ts []int64) {
+				wg.Add(1)
+				log.Printf("%s", fn)
 				err := run(fn, o, t, ts)
 				errChan <- err
+				wg.Done()
 			}(fn, o, t, ts)
 
 			if err := <-errChan; err != nil {
 				return err
 			}
 		}
+		wg.Wait()
 
 		return nil
 	}
@@ -72,6 +78,8 @@ func main() {
 }
 
 func run(fn string, o string, t string, ts []int64) (err error) {
+	log.Printf("%s start.", fn)
+
 	re := regexp.MustCompile(`.+\\(\d+)_step(\d+)\.csv$`)
 	rs := re.FindStringSubmatch(fn)
 	if len(rs) != 3 {
@@ -114,6 +122,7 @@ func run(fn string, o string, t string, ts []int64) (err error) {
 
 	err = closeFile(f)
 
+	log.Printf("%s done.", fn)
 	return err
 }
 
